@@ -35,8 +35,10 @@
 		
 		<!-- custom css+js -->
 		<link rel="stylesheet" href="app.css"/>
-		<script src="Base64.js"></script>
 		<script src="app.js"></script>
+		
+		
+		<script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
 
 		<!--HandleBars Templates-->
 		<script id="template_categories_list" type="text/x-handlebars-template">
@@ -53,7 +55,11 @@
 	  
 	  
 	<div id="content">
-		<div id="lagerfeld" class="dd"></div>
+		<input type="file" id="fileInput" name="file" />
+		<br/>
+		<img src="example.JPG" border=0 id="inputImage" class="input" onload="onImageLoaded();"/>
+		<br/>
+		<canvas id="imageCanvas" ></canvas>
 	</div>
 	
 	
