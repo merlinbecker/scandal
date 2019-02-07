@@ -1,7 +1,13 @@
 .input{
-	max-width:256px;	
+	/*max-width:2500px;	
+	*/
+	display:none;
+}
+#preview_img,#preview_detect,#preview_cropped{
+	max-width:256px;
 }
 #imageCanvas{
 	max-width:256px;
 	max-height:456px;	
 }
+

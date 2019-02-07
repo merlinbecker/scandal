@@ -33,11 +33,10 @@ function setAssetLoaded(){
 		do_calculation();
 	}
 }
-function do_calculation(){
-	let image=cv.imread(document.getElementById("inputImage"));
+
+function scaleImage(image,maxWidth=500,maxHeight=500){
 	let dst = new cv.Mat();
-	
-	let maxWidth=500,maxHeight=500;
+
 	let width = image.size().width;
 	let height = image.size().height;
 	var shouldResize = (width > maxWidth) || (height > maxHeight);
@@ -52,17 +51,18 @@ function do_calculation(){
 			newWidth = width * (maxHeight / height);
 			newHeight = maxHeight;
 		}
-
 		let dsize = new cv.Size(newWidth, newHeight);
-		// You can try more different parameters
 		cv.resize(image, dst, dsize, 0, 0, cv.INTER_AREA);
 	}
 	else dst=image.clone();
 	
-
+	return dst;
+}
+function findPaper(image){
 	let gray=new cv.Mat();
 	let edged=new cv.Mat();
-	cv.cvtColor(dst,gray,cv.COLOR_BGR2GRAY);
+	cv.cvtColor(image,gray,cv.COLOR_BGR2GRAY);
+	
 	let kernel=new cv.Size(5,5);
 	cv.GaussianBlur(gray,gray,kernel,0, 0);
 	cv.Canny(gray,edged,50, 100,3,false);
@@ -70,12 +70,13 @@ function do_calculation(){
 	let contour=new cv.MatVector();
 	let hierachy=new cv.Mat();
 	let contourimage=new cv.Mat.zeros(image.rows,image.cols,cv.CV_8UC3);
-
-	
 	//wir können nicht einfach ein rechteck approximieren, da nicht immer ein geschlossenes Rechteck bei Dokumenten erkannt wird, bzw. auch Ecken fehlen können
 	//wir legen also ein Rechteck um die Kontur und suchen den nähesten Punkt von der Kontur zum Rechteck
-
+	
 	cv.findContours(edged.clone(),contour,hierachy,cv.RETR_CCOMP,cv.CHAIN_APPROX_SIMPLE);
+	delete gray;
+	delete edged;
+	
 	let maxperi=0;
 	let cindex=0;
 
@@ -131,15 +132,81 @@ function do_calculation(){
 	let color=new cv.Scalar(255,0,0);
 	cv.drawContours(contourimage,contour,cindex,color,1,cv.LINE_8,hierachy,0);
 
+	return [contourimage,bounds];
+}
+
+function do_calculation(){
+	let image=cv.imread(document.getElementById("inputImage"));
+	cv.imshow('preview_img', image);
+	let dst=scaleImage(image);
+	let result=findPaper(dst);
+
+	cv.imshow('preview_detect',result[0]);
+
+	let bounds=result[1];
 	//todo:
 	//jetzt die 4 Punkte Transformation vornehmen
+	//dann refactorieren
 	//https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
-	//
-	//
-	cv.imshow('imageCanvas', contourimage);
+	//sort clockwise
 
+	//obtain a consistent order of the points and unpack them
+	bounds.sort((a,b)=>a.y-b.y);
+	bounds.sort((a,b)=>a.x-b.x);
+	let tl=bounds[0],tr=bounds[1],bl=bounds[2],br=bounds[3];
+
+	let ratio=image.rows/dst.rows;
+	tr.x*=ratio;
+	tr.y*=ratio;
+	tl.x*=ratio;
+	tl.y*=ratio;
+	bl.x*=ratio;
+	bl.y*=ratio;
+	br.x*=ratio;
+	br.y*=ratio;
+
+	//compute the width of the new image, which will be the maximum distance between bottom-right and bottom-left
+	//x-coordinates or the top-right and top-left x-coordinates
+	let widthA=Math.sqrt(Math.pow((br.x-bl.x),2)+Math.pow((br.y-bl.y),2));
+	let widthB=Math.sqrt(Math.pow((tr.x-tl.x),2)+Math.pow((tr.y-tl.y),2));
+	let maxWidth=Math.max(Math.trunc(widthA),Math.trunc(widthB));
+
+	//compute the height of the new image, which will be the maximum distance between the top-right and bottom-right
+	//y-coordinates or the top-left and bottom-left y-coordinates
+	let heightA=Math.sqrt(Math.pow((tr.x-br.x),2)+Math.pow((tr.y-br.y),2));
+	let heightB=Math.sqrt(Math.pow((tl.x-bl.x),2)+Math.pow((tl.y-bl.y),2));
+	let maxHeight=Math.max(Math.trunc(heightA),Math.trunc(heightB));
+
+	//now that we have the dimensions of the new image, construct the set
+	//of destination points to obtain a "birds eye view" of the image,
+	//again specifying points in the top-left, top-right, bottom-right and bottom-left
+	//order
+	console.log("MaxWidth "+maxWidth);
+	console.log("MaxHeight "+maxHeight);
+	
+	
+
+
+	console.log("ratio!!"+ratio);
+
+	let trans=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,maxWidth-1,0,maxWidth-1,maxHeight-1,0,maxHeight-1]);
+	//let points=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,bl.x,bl.y,br.x,br.y]);
+	let points=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,bl.x,bl.y,br.x,br.y]);
+	let M = cv.getPerspectiveTransform(points, trans);
+	let dsize=new cv.Size(maxWidth,maxHeight);
+
+	let output_image=new cv.Mat();//new cv.Mat(dst.rows,dst.cols,cv.CV_8UC3);
+	cv.warpPerspective(image,output_image,M,dsize,cv.INTER_LINEAR,cv.BORDER_CONSTANT, new cv.Scalar());
+
+	console.log("halloA");
+
+	cv.imshow('preview_cropped', output_image);
+
+	output_image.delete();
 	image.delete();
 	dst.delete();
 }
+
+
 
 

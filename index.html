@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
-		<head>
+	<head>
 		<!--META-->
 		<base href=""/>
 		<meta charset="utf-8">
@@ -43,7 +43,7 @@
 		<!--HandleBars Templates-->
 		<script id="template_categories_list" type="text/x-handlebars-template">
 		</script>
-	</head>
+		</head>
 	<body>
 	  <!-- Navigation Panel -->
 	  <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -55,7 +55,32 @@
 	  
 	  
 	<div id="content">
-		<input type="file" id="fileInput" name="file" />
+		<ul class="list-group">
+  			<li class="list-group-item" id="step0">
+				<h3>0. Select Photo</h3>
+				<input type="file" id="fileInput" name="file" />
+			</li>
+  			<li class="list-group-item" id="step1">
+				<h3>1. Preview of input image</h3>
+				<canvas id="preview_img"><canvas> 	
+			</li>
+  			<li class="list-group-item" id="step2">
+				<h3>2. Paper detection</h3>
+				<canvas id="preview_detect"></canvas>
+			</li>
+  			<li class="list-group-item" id="step3">
+				<h3>3. cropped document</h3>
+				<canvas id="preview_cropped"></canvas>
+
+			</li>
+  			<li class="list-group-item" id="step4">
+				<h3>4. Text detecion</h3>
+				<canvas id="preview_tessaract"></canvas>
+			</li>
+			<li class="list-group-item" id="step5">
+				<h3>5. PDF generation</h3>
+			</li>
+		</ul>
 		<br/>
 		<img src="example.JPG" border=0 id="inputImage" class="input" onload="onImageLoaded();"/>
 		<br/>
