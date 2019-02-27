@@ -71,7 +71,7 @@ function findPaper(image){
 	let hierachy=new cv.Mat();
 	let contourimage=new cv.Mat.zeros(image.rows,image.cols,cv.CV_8UC3);
 	//wir können nicht einfach ein rechteck approximieren, da nicht immer ein geschlossenes Rechteck bei Dokumenten erkannt wird, bzw. auch Ecken fehlen können
-	//wir legen also ein Rechteck um die Kontur und suchen den nähesten Punkt von der Kontur zum Rechteck
+	//wir legen also ein Rechteck um die größte Kontur und suchen den nähesten Punkt von der Kontur zum Rechteck
 	
 	cv.findContours(edged.clone(),contour,hierachy,cv.RETR_CCOMP,cv.CHAIN_APPROX_SIMPLE);
 	delete gray;
@@ -94,12 +94,11 @@ function findPaper(image){
 	
 
 	let rcolor=new cv.Scalar(0,0,255);
-	let gcolor=new cv.Scalar(0,255,0);
+	
 	let ycolor=new cv.Scalar(255,255,0);
 
 	let bounds=[];
 
-	
 	for (let i=0;i<4;i++){
 		cv.circle(contourimage,vertices[i],3,rcolor,3);
 		console.log(vertices[i].x+" "+vertices[i].y);
@@ -119,8 +118,6 @@ function findPaper(image){
 
 			if(dist==mindist)
 				minPoint=new cv.Point(x,y);
-
-			cv.circle(contourimage,center,3,gcolor,3);
 		}
 		bounds.push(minPoint);
 
@@ -135,26 +132,44 @@ function findPaper(image){
 	return [contourimage,bounds];
 }
 
+function sortPoints(points){
+	points.sort((a,b)=>a.y - b.y);
+	
+	let upperPoints=[points[0],points[1]]
+	let lowerPoints=[points[2],points[3]]
+	upperPoints.sort((a,b)=>(a.x+a.y) - (b.x+b.y));
+	lowerPoints.sort((a,b)=>(a.x+a.y) - (b.x+b.y));	
+	points=[upperPoints[0],upperPoints[1],lowerPoints[1],lowerPoints[0]];
+
+	return points;
+}
+
 function do_calculation(){
 	let image=cv.imread(document.getElementById("inputImage"));
 	cv.imshow('preview_img', image);
 	let dst=scaleImage(image);
 	let result=findPaper(dst);
-
-	cv.imshow('preview_detect',result[0]);
-
 	let bounds=result[1];
+	
 	//todo:
 	//jetzt die 4 Punkte Transformation vornehmen
 	//dann refactorieren
 	//https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
 	//sort clockwise
-
-	//obtain a consistent order of the points and unpack them
-	bounds.sort((a,b)=>a.y-b.y);
-	bounds.sort((a,b)=>a.x-b.x);
+	bounds=sortPoints(bounds);
+	
+	let gcolor=new Array();
+	gcolor[0]=new cv.Scalar(0,255,0);
+	gcolor[1]=new cv.Scalar(255,0,0);
+	gcolor[2]=new cv.Scalar(255,0,255);
+	gcolor[3]=new cv.Scalar(0,255,255);
+	for(let i=0;i<4;i++){
+		cv.circle(result[0],bounds[i],4,gcolor[i],3);
+	}
 	let tl=bounds[0],tr=bounds[1],bl=bounds[2],br=bounds[3];
 
+	cv.imshow('preview_detect',result[0]);
+	
 	let ratio=image.rows/dst.rows;
 	tr.x*=ratio;
 	tr.y*=ratio;
@@ -164,7 +179,7 @@ function do_calculation(){
 	bl.y*=ratio;
 	br.x*=ratio;
 	br.y*=ratio;
-
+	
 	//compute the width of the new image, which will be the maximum distance between bottom-right and bottom-left
 	//x-coordinates or the top-right and top-left x-coordinates
 	let widthA=Math.sqrt(Math.pow((br.x-bl.x),2)+Math.pow((br.y-bl.y),2));
@@ -184,22 +199,14 @@ function do_calculation(){
 	console.log("MaxWidth "+maxWidth);
 	console.log("MaxHeight "+maxHeight);
 	
-	
-
-
-	console.log("ratio!!"+ratio);
-
 	let trans=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,maxWidth-1,0,maxWidth-1,maxHeight-1,0,maxHeight-1]);
-	//let points=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,bl.x,bl.y,br.x,br.y]);
 	let points=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,bl.x,bl.y,br.x,br.y]);
 	let M = cv.getPerspectiveTransform(points, trans);
+	
 	let dsize=new cv.Size(maxWidth,maxHeight);
-
-	let output_image=new cv.Mat();//new cv.Mat(dst.rows,dst.cols,cv.CV_8UC3);
+	let output_image=new cv.Mat();
 	cv.warpPerspective(image,output_image,M,dsize,cv.INTER_LINEAR,cv.BORDER_CONSTANT, new cv.Scalar());
-
-	console.log("halloA");
-
+	
 	cv.imshow('preview_cropped', output_image);
 
 	output_image.delete();
