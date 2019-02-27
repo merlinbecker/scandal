@@ -101,7 +101,6 @@ function findPaper(image){
 
 	for (let i=0;i<4;i++){
 		cv.circle(contourimage,vertices[i],3,rcolor,3);
-		console.log(vertices[i].x+" "+vertices[i].y);
 		let mindist=-1;
 		let minPoint=0;
 		for(let j=0;j<zielkontur.rows;j++){
@@ -166,7 +165,7 @@ function do_calculation(){
 	for(let i=0;i<4;i++){
 		cv.circle(result[0],bounds[i],4,gcolor[i],3);
 	}
-	let tl=bounds[0],tr=bounds[1],bl=bounds[2],br=bounds[3];
+	let tl=bounds[0],tr=bounds[1],bl=bounds[3],br=bounds[2];
 
 	cv.imshow('preview_detect',result[0]);
 	
@@ -200,15 +199,23 @@ function do_calculation(){
 	console.log("MaxHeight "+maxHeight);
 	
 	let trans=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,maxWidth-1,0,maxWidth-1,maxHeight-1,0,maxHeight-1]);
-	let points=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,bl.x,bl.y,br.x,br.y]);
+	let points=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,br.x,br.y,bl.x,bl.y]);
 	let M = cv.getPerspectiveTransform(points, trans);
 	
 	let dsize=new cv.Size(maxWidth,maxHeight);
 	let output_image=new cv.Mat();
 	cv.warpPerspective(image,output_image,M,dsize,cv.INTER_LINEAR,cv.BORDER_CONSTANT, new cv.Scalar());
+	let output_image_gray=new cv.Mat();
+	let output_image_thresh=new cv.Mat();
 	
-	cv.imshow('preview_cropped', output_image);
-
+	cv.cvtColor(output_image,output_image_gray,cv.COLOR_BGR2GRAY);
+	
+	cv.threshold(output_image_gray,output_image_thresh,127, 255, cv.THRESH_BINARY);
+	
+	
+	cv.imshow('preview_cropped', output_image_thresh);
+	output_image_gray.delete();
+	output_image_thresh.delete();
 	output_image.delete();
 	image.delete();
 	dst.delete();

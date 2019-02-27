@@ -1,9 +1,7 @@
 .input{
-	/*max-width:2500px;	
-	*/
 	display:none;
 }
-#preview_img,#preview_detect,#preview_cropped{
+#preview_img,#preview_detect/*,#preview_cropped*/{
 	max-width:256px;
 }
 #imageCanvas{
