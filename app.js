@@ -24,11 +24,12 @@ $(document).ready(function(evt){
 	$("#fileInput").change(function(evt){
 		var file = evt.target.files[0];
 		getOrientation(file, function(orientation) {
+			 var orient=orientation;
 			 var reader = new FileReader();
 			 reader.onload = function(event) {
 				 console.log("Filereader result!");
 				 console.log(event.target.result);
-				 resetOrientation(event.target.result,orientation,function(resetImg){
+				 resetOrientation(event.target.result,orient,function(resetImg){
 					 $("#inputImage").attr("src",resetImg);
 				 });
 			 };
@@ -310,7 +311,7 @@ function do_calculation(){
 	
 	cv.cvtColor(output_image,output_image_gray,cv.COLOR_BGR2GRAY);
 	
-	cv.threshold(output_image_gray,output_image_thresh,110, 255, cv.THRESH_BINARY);
+	cv.threshold(output_image_gray,output_image_thresh,90, 255, cv.THRESH_BINARY);
 	
 	
 	cv.imshow('preview_cropped', output_image_thresh);
