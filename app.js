@@ -311,7 +311,7 @@ function do_calculation(){
 	
 	cv.cvtColor(output_image,output_image_gray,cv.COLOR_BGR2GRAY);
 	
-	cv.threshold(output_image_gray,output_image_thresh,90, 255, cv.THRESH_BINARY);
+	cv.threshold(output_image_gray,output_image_thresh,110, 255, cv.THRESH_BINARY);
 	
 	
 	cv.imshow('preview_cropped', output_image_thresh);
