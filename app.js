@@ -25,6 +25,7 @@ $(document).ready(function(evt){
 		getOrientation(file, function(orientation) {
 			 var reader = new FileReader();
 			 reader.onload = function(event) {
+				 alert("Orientation!"+orientation);
 				 console.log("Filereader result!");
 				 console.log(event.target.result);
 				 resetOrientation(event.target.result,orientation,function(resetImg){
