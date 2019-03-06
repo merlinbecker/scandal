@@ -43,6 +43,12 @@
 		<!--HandleBars Templates-->
 		<script id="template_categories_list" type="text/x-handlebars-template">
 		</script>
+		<!-- JsPDF -->
+		<!-- https://github.com/MrRio/jsPDF -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" async="onJsPDFReady()" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
+		<!-- Tesseract text detection -->
+		<!-- https://github.com/naptha/tesseract.js -->
+		<script async src='https://cdn.jsdelivr.net/gh/naptha/tesseract.js@v1.0.14/dist/tesseract.min.js' onload="onTesseractReady()"></script>
 		</head>
 	<body>
 	  <!-- Navigation Panel -->
@@ -75,7 +81,7 @@
 			</li>
   			<li class="list-group-item" id="step4">
 				<h3>4. Text detection</h3>
-				<canvas id="preview_tessaract"></canvas>
+				<div id="preview_tesseract"></div>
 			</li>
 			<li class="list-group-item" id="step5">
 				<h3>5. PDF generation</h3>

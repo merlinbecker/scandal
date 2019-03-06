@@ -10,17 +10,27 @@
  * 3. https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
  * 4. https://docs.opencv.org/3.4/dd/d52/tutorial_js_geometric_transformations.html
  * 5. https://stackoverflow.com/questions/51024864/getting-contours-point-using-opencv-js
- * 
+ * 6. http://tesseract.projectnaptha.com/
+ *
+ *
  * @todo: refactor this!
  *
  *
  * **/
 var assets=0;
+
 $(document).ready(function(evt){
 	$("#fileInput").change(function(evt){
 		$("#inputImage").attr("src",URL.createObjectURL(evt.target.files[0]));
 	});
 });
+function onJsPDFReady(){
+	console.log("JsPDF Ready!");
+}
+
+function onTesseractReady(){
+	console.log("Tesseract Ready!");	
+}
 function onOpenCvReady(){
 	setAssetLoaded();
 }
@@ -210,10 +220,13 @@ function do_calculation(){
 	
 	cv.cvtColor(output_image,output_image_gray,cv.COLOR_BGR2GRAY);
 	
-	cv.threshold(output_image_gray,output_image_thresh,127, 255, cv.THRESH_BINARY);
+	cv.threshold(output_image_gray,output_image_thresh,90, 255, cv.THRESH_BINARY);
 	
 	
 	cv.imshow('preview_cropped', output_image_thresh);
+	
+	detectText('preview_cropped');
+	
 	output_image_gray.delete();
 	output_image_thresh.delete();
 	output_image.delete();
@@ -221,6 +234,32 @@ function do_calculation(){
 	dst.delete();
 }
 
+function nl2br (str, is_xhtml) {
+  // @see https://stackoverflow.com/questions/7467840/nl2br-equivalent-in-javascript
+  var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br ' + '/>' : '<br>'; // Adjust comment to avoid issue on phpjs.org display
+
+  return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
+}
+
+function detectText(im){
+	
+		im=document.getElementById(im);
+		console.log("detecting text");
+		Tesseract.recognize(im,{lang: 'deu'})
+       .progress(function  (p) { console.log('progress', p)    })
+       .then(function (result) { console.log('result', result);
+								let text=result.text;
+								text=nl2br(text);
+								$("#preview_tesseract").html(text);
+								//createPDF(im)
+								})
+}
+function createPDF(im,text){
+	var doc = new jsPDF()
+	doc.setFontSize(40)
+	doc.text(35, 25, 'Paranyan loves jsPDF')
+	doc.addImage(imgData, 'JPEG', 15, 40, 180, 160)
+}
 
 
 
