@@ -11,6 +11,7 @@
  * 4. https://docs.opencv.org/3.4/dd/d52/tutorial_js_geometric_transformations.html
  * 5. https://stackoverflow.com/questions/51024864/getting-contours-point-using-opencv-js
  * 6. http://tesseract.projectnaptha.com/
+ * 7. https://stackoverflow.com/questions/7584794/accessing-jpeg-exif-rotation-data-in-javascript-on-the-client-side/32490603#32490603
  *
  *
  * @todo: refactor this!
@@ -25,7 +26,6 @@ $(document).ready(function(evt){
 		getOrientation(file, function(orientation) {
 			 var reader = new FileReader();
 			 reader.onload = function(event) {
-				 alert("Orientation!"+orientation);
 				 console.log("Filereader result!");
 				 console.log(event.target.result);
 				 resetOrientation(event.target.result,orientation,function(resetImg){
@@ -310,7 +310,7 @@ function do_calculation(){
 	
 	cv.cvtColor(output_image,output_image_gray,cv.COLOR_BGR2GRAY);
 	
-	cv.threshold(output_image_gray,output_image_thresh,90, 255, cv.THRESH_BINARY);
+	cv.threshold(output_image_gray,output_image_thresh,110, 255, cv.THRESH_BINARY);
 	
 	
 	cv.imshow('preview_cropped', output_image_thresh);
