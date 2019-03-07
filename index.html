@@ -9,8 +9,7 @@
 		<meta name="mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="theme-color" content="#000000">
-		<title>Scandal 0.1</title>
-		
+		<title>Scandal 0.2.0</title>
 		<!--INCLUDES-->	
 		<!--jquery-->
 		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -22,8 +21,8 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.2.1/typeahead.bundle.min.js" integrity="sha256-VCsWOz+0GuHdS/sIICtQNTFJdbaDI80rxvoB7BXabrU=" crossorigin="anonymous"></script>
 		
 		<!-- include bootstrap -->
-		<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha256-YLGeXaapI0/5IgZopewRJcFXomhRMlYYjugPLSyNjTY=" crossorigin="anonymous" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js" integrity="sha256-fzFFyH01cBVPYzl16KT40wqjhgPtq6FFUB6ckN2+GGw=" crossorigin="anonymous"></script>
 		
 		<!-- List.js -->
 		<!-- https://github.com/javve/list.js/blob/master/README.md -->
@@ -33,16 +32,46 @@
 		<!-- https://github.com/wycats/handlebars.js/ -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js" integrity="sha256-+JMHsXRyeTsws/tzbIh5YHQxRdKCuNjmvNcTFtY6DLc=" crossorigin="anonymous"></script>
 		
+		<!--HandleBars Templates-->
+		<script id="card-template" type="text/x-handlebars-template">
+			
+			<div class="card" style="width: 18rem;">
+			<img class="card-img-top" src="holder.js/200x200?auto=yes&theme=sky&text={{img_placeholder}}">
+			<div class="card-loading card-body d-flex justify-content-center" style="display:none!important">
+				  <div class="spinner-border text-primary" role="status">
+					<span class="sr-only">Loading...</span>
+				  </div>
+			</div>
+			
+			  <div class="card-body card-gui">
+				<h5 class="card-title">{{title}}</h5>
+				<p class="card-text">{{text}}</p>
+				<button type="button" class="btn btn-danger" disabled hidden><i class="fas fa-thumbs-down" ></i> Nochmal</button>
+				<button type="button" class="btn btn-success" disabled hidden><i class="fas fa-thumbs-up" ></i> Weiter</button>
+			  </div>
+			</div>
+		</script>
+
+		<script id="fileinput-template" type="text/x-handlebars-template">
+			<div class="input-group">
+			  <div class="custom-file">
+				<input type="file" class="custom-file-input" id="fileinput_scan">
+				<label class="custom-file-label" for="fileinput_scan">Foto/Datei</label>
+			  </div>
+			</div>
+		</script>
+		
+		<!--Holder.js -->
+		<!-- https://github.com/imsky/holder -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/holder/2.9.6/holder.min.js" integrity="sha256-yF/YjmNnXHBdym5nuQyBNU62sCUN9Hx5awMkApzhZR0=" crossorigin="anonymous"></script>
+		
 		<!-- custom css+js -->
 		<link rel="stylesheet" href="app.css"/>
 		<script src="app.js"></script>
 		
-		
+		<!-- module based js -->
 		<script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
-
-		<!--HandleBars Templates-->
-		<script id="template_categories_list" type="text/x-handlebars-template">
-		</script>
+		
 		<!-- JsPDF -->
 		<!-- https://github.com/MrRio/jsPDF -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" async="onJsPDFReady()" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
@@ -54,7 +83,11 @@
 		<!-- https://github.com/blueimp/JavaScript-Load-Image -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-load-image/2.20.1/load-image.all.min.js" integrity="sha256-CD8WcpNpYLkkXvLCShFHA25g5JZIS2506n0r7wIRUtM=" crossorigin="anonymous"></script>
 		
+		
 		</head>
+		
+		
+		
 	<body>
 	  <!-- Navigation Panel -->
 	  <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -63,7 +96,10 @@
 		<ul class="navbar-nav mr-auto">
 		</ul>
 	  </nav>
+	  <!-- Card Layout Panel -->
+	  <div id="scandal_app">
 	  
+	  </div>
 	  
 	<div id="content">
 		<ul class="list-group">
@@ -93,7 +129,7 @@
 			</li>
 		</ul>
 		<br/>
-		<img src="example.JPG" border=0 id="inputImage" class="input" onload="onImageLoaded();"/>
+		<img src="" border=0 id="inputImage" class="input" onload="onImageLoaded();"/>
 		<br/>
 		<canvas id="imageCanvas" ></canvas>
 	</div>

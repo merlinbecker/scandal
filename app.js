@@ -15,13 +15,53 @@
  *
  *
  * @todo: refactor this!
+ * @todo: first in functions, then classes, then modules
  * @todo: clean memory up! 
  *
  * **/
+ var container="#scandal_app";
+ //initializes app and 
+ function initialize(){
+	$(container).empty();
+	let source   = document.getElementById("card-template").innerHTML;
+	let card_template = Handlebars.compile(source);
+	step0_image_scan(container,card_template);
+ }
+ 
+ /**********************/
+ 
+ //module image scan
+ //requires 
+ function step0_image_scan(container,card_template){
+	 //create and display card layout
+	 //font=FontAwesome&text=&#xf067;&size=50
+	let context = {title: "Scannen", text: "Fotografiere das Dokument vor einem dunklen Untergrund.","img_placeholder":"1. Scan Document"};
+	let html=$(card_template(context));
+	$(container).append(html);
+	
+	let source   = document.getElementById("fileinput-template").innerHTML;
+	let input_template = Handlebars.compile(source);
+	let html2=$(input_template());
+	html.find(".card-text").after(html2);
+	
+	let input=html.find("#fileinput_scan");
+	//let gui=html.find(".")
+	 //create logic
+	input.change(function(evt){
+		console.log("hallo!");
+	});
+	html.find(".card-img-top").click(function(evt){
+		input.click();
+	});
+ }
+ 
+/**********************/
+ 
 var assets=0;
 
 $(document).ready(function(evt){
-	$("#fileInput").change(function(evt){
+	initialize();
+	/*$("#fileInput").change(function(evt){
 		var file = evt.target.files[0];
 		getOrientation(file, function(orientation) {
 			 var orient=orientation;
@@ -35,12 +75,13 @@ $(document).ready(function(evt){
 			 };
 			 reader.readAsDataURL(file);
 		});
-	});
+	});*/
 });
+
+
 function onJsPDFReady(){
 	console.log("JsPDF Ready!");
 }
-
 function onTesseractReady(){
 	console.log("Tesseract Ready!");	
 }
