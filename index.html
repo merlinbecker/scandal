@@ -9,7 +9,7 @@
 		<meta name="mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="theme-color" content="#000000">
-		<title>Scandal 0.2.0</title>
+		<title>Scandal 0.2.1</title>
 		<!--INCLUDES-->	
 		<!--jquery-->
 		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -36,7 +36,7 @@
 		<script id="card-template" type="text/x-handlebars-template">
 			
 			<div class="card" style="width: 18rem;">
-			<img class="card-img-top" src="holder.js/200x200?auto=yes&theme=sky&text={{img_placeholder}}">
+			<img class="card-img-top" src="holder.js/200x200?auto=yes&theme=sky&text={{img_placeholder}}&random=yes">
 			<div class="card-loading card-body d-flex justify-content-center" style="display:none!important">
 				  <div class="spinner-border text-primary" role="status">
 					<span class="sr-only">Loading...</span>
@@ -46,8 +46,8 @@
 			  <div class="card-body card-gui">
 				<h5 class="card-title">{{title}}</h5>
 				<p class="card-text">{{text}}</p>
-				<button type="button" class="btn btn-danger" disabled hidden><i class="fas fa-thumbs-down" ></i> Nochmal</button>
-				<button type="button" class="btn btn-success" disabled hidden><i class="fas fa-thumbs-up" ></i> Weiter</button>
+				<button type="button" class="btn btn-danger"><i class="fas fa-thumbs-down" ></i> Nochmal</button>
+				<button type="button" class="btn btn-success"><i class="fas fa-thumbs-up" ></i> Weiter</button>
 			  </div>
 			</div>
 		</script>
@@ -55,10 +55,11 @@
 		<script id="fileinput-template" type="text/x-handlebars-template">
 			<div class="input-group">
 			  <div class="custom-file">
-				<input type="file" class="custom-file-input" id="fileinput_scan">
+				<input type="file" class="custom-file-input" id="fileinput_scan" accept="image/*">
 				<label class="custom-file-label" for="fileinput_scan">Foto/Datei</label>
 			  </div>
 			</div>
+			<br/>
 		</script>
 		
 		<!--Holder.js -->

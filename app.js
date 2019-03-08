@@ -16,66 +16,238 @@
  *
  * @todo: refactor this!
  * @todo: first in functions, then classes, then modules
+ * @todo: define a loader to load modules dynamically
  * @todo: clean memory up! 
  *
  * **/
- var container="#scandal_app";
- //initializes app and 
- function initialize(){
-	$(container).empty();
-	let source   = document.getElementById("card-template").innerHTML;
-	let card_template = Handlebars.compile(source);
-	step0_image_scan(container,card_template);
- }
  
- /**********************/
+/**
+ *Class ScanModule: module image scan
+ *handles processing of input file (from camera or documents)
+ * @author Merlin Becker
+ * @version 1.0
+ * @since 0.2.1
+ * @created 08.03.2019
+ * @todo: wenn man "nochmal" drückt, soll man zum letzten erfolgreichen User-Input geleitet werden (sofern es mehrer inputs gibt im Ablauf)
+**/
+class ScanModule{
+	constructor(manager,container,card_template){
+		this.manager=manager;
+		this.container=container;
+		this.card_template=card_template;
+	}
+	setupGUI(){
+		console.log("Module Scanner setup gui");
+		let content = {title: "Scannen", text: "Fotografiere das Dokument vor einem dunklen Untergrund.","img_placeholder":"1. Scan Document"};
+		let html=$(this.card_template(content));
+		$(this.container).append(html);
+		
+		//insert Input Type File
+		let source   = document.getElementById("fileinput-template").innerHTML;
+		let input_template = Handlebars.compile(source);
+		let html2=$(input_template());
+		html.find(".card-text").after(html2);
+		
+		this.input=html.find("#fileinput_scan");
+		this.gui=html.find(".card-gui");
+		this.loading=html.find(".card-loading");
+		this.btn_cancel=html.find(".btn-danger");
+		this.btn_success=html.find(".btn-success");
+		this.preview_img=html.find(".card-img-top");
+		
+		this.btn_success.css("display","none");
+		this.btn_cancel.css("display","none");
+		
+		//bind events
+		let self=this;
+		Holder.run({
+			images: self.preview_img[0]
+		});
+		
+		this.btn_cancel.click(function(evt){
+			self.manager.moduleUserCancelled(self.manager);
+		});
+		this.btn_success.click(function(evt){
+			self.manager.moduleUserAccepted(self.manager);
+		});
+		
+		html.find(".card-img-top").click(function(evt){
+			self.input.click();
+		});
+		
+		this.input.change(function(evt){
+			self.startCalculation(evt);
+		});
+	}	
+	showFinishedGUI(){
+		console.log("showing finish screen!");
+		this.gui.css("display","block");
+		this.loading.remove();
+		this.btn_cancel.css("display","");
+		this.btn_success.css("display","");
+	}	
+	startCalculation(evt){
+		console.log("Processs file!!");
+		this.gui.css("display","none");
+		this.loading.css("display","block");
+		
+		this.file=evt.target.files[0];
+		this.getOrientation(this.onOrientation);
+	}
+	getOrientation(callback) {
+		var reader = new FileReader();
+		var self=this;
+		reader.onload = function(event) {
+			var view = new DataView(event.target.result);
+			if (view.getUint16(0, false) != 0xFFD8) return callback(self,-2);
+			var length = view.byteLength,
+			offset = 2;
+			while (offset < length) {
+				var marker = view.getUint16(offset, false);
+				offset += 2;
+
+				if (marker == 0xFFE1) {
+				if (view.getUint32(offset += 2, false) != 0x45786966) {
+					return callback(self,-1);
+				}
+				var little = view.getUint16(offset += 6, false) == 0x4949;
+				offset += view.getUint32(offset + 4, little);
+				var tags = view.getUint16(offset, little);
+				offset += 2;
+
+				for (var i = 0; i < tags; i++)
+					if (view.getUint16(offset + (i * 12), little) == 0x0112)
+						return callback(self,view.getUint16(offset + (i * 12) + 8, little));
+				}
+				else if ((marker & 0xFF00) != 0xFF00) break;
+				else offset += view.getUint16(offset, false);
+			}
+			return callback(self,-1);
+			};
+			reader.readAsArrayBuffer(this.file.slice(0, 64 * 1024));
+	}
+	onOrientation(context,orientation){
+		var reader = new FileReader();
+		reader.onload = function(event) {
+			if(orientation==-1||orientation==-2){
+				context.calculationFinished(context,event.target.result);
+			}
+			else{
+				context.resetOrientation(event.target.result,orient,context.calculationFinished(context,resetImg));
+			}
+		};
+		reader.readAsDataURL(context.file);
+	}	
+	resetOrientation(srcBase64, srcOrientation, callback) {
+		var img = new Image();	
+		img.onload = function() {
+			var width = img.width,
+			height = img.height,
+			canvas = document.createElement('canvas'),
+			ctx = canvas.getContext("2d");
+			// set proper canvas dimensions before transform & export
+			if (4 < srcOrientation && srcOrientation < 9) {
+				canvas.width = height;
+				canvas.height = width;
+			} else {
+				canvas.width = width;
+				canvas.height = height;
+			}
+
+			// transform context before drawing image
+			switch (srcOrientation) {
+				case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
+				case 3: ctx.transform(-1, 0, 0, -1, width, height ); break;
+				case 4: ctx.transform(1, 0, 0, -1, 0, height ); break;
+				case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+				case 6: ctx.transform(0, 1, -1, 0, height , 0); break;
+				case 7: ctx.transform(0, -1, -1, 0, height , width); break;
+				case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
+				default: break;
+			}
+
+			// draw image
+			ctx.drawImage(img, 0, 0);
+
+			// export base64
+			callback(canvas.toDataURL());
+		};
+	img.src = srcBase64;
+	}
+	calculationFinished(context,resultImage){
+		context.preview_img.attr("src",resultImage);
+		context.manager.moduleFinished(context,resultImage);
+		context.showFinishedGUI();
+	} 
+}
+/**********************/
+
+
+
+/**
+ *Class WorkflowManager: manage workflow
+ *manages the chained workflow in the App
+ * @author Merlin Becker
+ * @version 1.0
+ * @since 0.2.1
+ * @created 08.03.2019
+**/
+class WorkflowManager{
+	/**
+	*instructionchain: array with modules to be called in order
+	*playground: html element where to put the modules gui
+	*template: path to Handlebars template
+	**/
+	constructor(instructionchain,playground,template){
+		this.chain=instructionchain;
+		this.chaincount=0;
+		this.playground=$(playground);
+		this.template=Handlebars.compile(document.getElementById(template).innerHTML);
+		this.current_module=null;
+	}
+	startNextModule(context=this){
+		if(context.chaincount>=context.chain.length){
+			alert("fertig!");
+			return;
+		}
+		context.playground.empty();
+		
+		let next_module_name=context.chain[context.chaincount];
+		switch(next_module_name){
+			case "scan":
+				context.current_module=new ScanModule(context,context.playground,context.template);
+			
+			default:
+				context.current_module=new ScanModule(context,context.playground,context.template);
+			
+		}
+		context.current_module.setupGUI();
+	}
+	moduleFinished(context,result){
+		console.log("WorkFlowManager: The module finished!");
+		context.interimresult=result;
+		//now go on luke!
+	}
+	moduleUserCancelled(context){
+		console.log("WorkflowManager: The user cancelled the result");
+		context.chaincount=0;
+		context.startNextModule(context);
+	}
+	moduleUserAccepted(context){
+		console.log("WorkflowManager: The user accepted the result");
+		context.chaincount++;
+		context.startNextModule(context);
+	}
+}
  
- //module image scan
- //requires 
- function step0_image_scan(container,card_template){
-	 //create and display card layout
-	 //font=FontAwesome&text=&#xf067;&size=50
-	let context = {title: "Scannen", text: "Fotografiere das Dokument vor einem dunklen Untergrund.","img_placeholder":"1. Scan Document"};
-	let html=$(card_template(context));
-	$(container).append(html);
-	
-	let source   = document.getElementById("fileinput-template").innerHTML;
-	let input_template = Handlebars.compile(source);
-	let html2=$(input_template());
-	html.find(".card-text").after(html2);
-	
-	let input=html.find("#fileinput_scan");
-	//let gui=html.find(".")
-	 //create logic
-	input.change(function(evt){
-		console.log("hallo!");
-	});
-	html.find(".card-img-top").click(function(evt){
-		input.click();
-	});
- }
  
 /**********************/
  
+ /**********************/
 var assets=0;
-
 $(document).ready(function(evt){
-	initialize();
-	/*$("#fileInput").change(function(evt){
-		var file = evt.target.files[0];
-		getOrientation(file, function(orientation) {
-			 var orient=orientation;
-			 var reader = new FileReader();
-			 reader.onload = function(event) {
-				 console.log("Filereader result!");
-				 console.log(event.target.result);
-				 resetOrientation(event.target.result,orient,function(resetImg){
-					 $("#inputImage").attr("src",resetImg);
-				 });
-			 };
-			 reader.readAsDataURL(file);
-		});
-	});*/
+	let manager=new WorkflowManager(["scan"],"#scandal_app","card-template");
+	manager.startNextModule();
 });
 
 
@@ -97,80 +269,7 @@ function setAssetLoaded(){
 		do_calculation();
 	}
 }
-function resetOrientation(srcBase64, srcOrientation, callback) {
-	var img = new Image();	
 
-	img.onload = function() {
-  	var width = img.width,
-    		height = img.height,
-        canvas = document.createElement('canvas'),
-	  		ctx = canvas.getContext("2d");
-		
-    // set proper canvas dimensions before transform & export
-		if (4 < srcOrientation && srcOrientation < 9) {
-    	canvas.width = height;
-      canvas.height = width;
-    } else {
-    	canvas.width = width;
-      canvas.height = height;
-    }
-	
-  	// transform context before drawing image
-		switch (srcOrientation) {
-      case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
-      case 3: ctx.transform(-1, 0, 0, -1, width, height ); break;
-      case 4: ctx.transform(1, 0, 0, -1, 0, height ); break;
-      case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
-      case 6: ctx.transform(0, 1, -1, 0, height , 0); break;
-      case 7: ctx.transform(0, -1, -1, 0, height , width); break;
-      case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
-      default: break;
-    }
-
-		// draw image
-    ctx.drawImage(img, 0, 0);
-
-		// export base64
-		callback(canvas.toDataURL());
-  };
-
-	img.src = srcBase64;
-}
-
-function getOrientation(file, callback) {
-  var reader = new FileReader();
-  reader.onload = function(event) {
-    var view = new DataView(event.target.result);
-
-    if (view.getUint16(0, false) != 0xFFD8) return callback(-2);
-
-    var length = view.byteLength,
-        offset = 2;
-
-    while (offset < length) {
-      var marker = view.getUint16(offset, false);
-      offset += 2;
-
-      if (marker == 0xFFE1) {
-        if (view.getUint32(offset += 2, false) != 0x45786966) {
-          return callback(-1);
-        }
-        var little = view.getUint16(offset += 6, false) == 0x4949;
-        offset += view.getUint32(offset + 4, little);
-        var tags = view.getUint16(offset, little);
-        offset += 2;
-
-        for (var i = 0; i < tags; i++)
-          if (view.getUint16(offset + (i * 12), little) == 0x0112)
-            return callback(view.getUint16(offset + (i * 12) + 8, little));
-      }
-      else if ((marker & 0xFF00) != 0xFF00) break;
-      else offset += view.getUint16(offset, false);
-    }
-    return callback(-1);
-  };
-  reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
-};
 
 function scaleImage(image,maxWidth=500,maxHeight=500){
 	let dst = new cv.Mat();
