@@ -20,6 +20,22 @@
  * @todo: clean memory up! 
  *
  * **/
+
+ 
+/**
+* Class BaseModule: Mother of all Moduled
+* @author Merlin Becker
+* @version 1.0
+* @since 0.2.1
+* @created 08.03.2019
+**/
+class BaseModule{
+	constructor(manager,container,card_template){
+		this.manager=manager;
+		this.container=container;
+		this.card_template=card_template;
+	}
+}
  
 /**
  *Class ScanModule: module image scan
@@ -30,15 +46,10 @@
  * @created 08.03.2019
  * @todo: wenn man "nochmal" drückt, soll man zum letzten erfolgreichen User-Input geleitet werden (sofern es mehrer inputs gibt im Ablauf)
 **/
-class ScanModule{
-	constructor(manager,container,card_template){
-		this.manager=manager;
-		this.container=container;
-		this.card_template=card_template;
-	}
+class ScanModule extends BaseModule{
 	setupGUI(){
 		console.log("Module Scanner setup gui");
-		let content = {title: "Scannen", text: "Fotografiere das Dokument vor einem dunklen Untergrund.","img_placeholder":"1. Scan Document"};
+		let content = {title: "Scannen", text: "Fotografiere das Dokument vor einem dunklen Untergrund.","img_placeholder":"Scan Document"};
 		let html=$(this.card_template(content));
 		$(this.container).append(html);
 		
